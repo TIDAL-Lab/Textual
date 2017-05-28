@@ -1,0 +1,89 @@
+[
+  { "name" : "strum" },
+
+  { "name" : "pluck" },
+
+  { "name" : "slap" },
+
+  { "name" : "reverse" },
+
+  { "name" : "turn" },
+
+  { "name" : "clone" },
+
+  { "name" : "stop" },
+
+  { 
+    "name" : "rest",
+    "params" : [
+      {
+        "name" : "beats",
+        "type" : "range", 
+        "min" : 1, 
+        "max" : 8, 
+        "step" : 1, 
+        "random" : true, 
+        "unit" : "",
+        "defaultValue" : 1
+      }
+    ]
+  },
+
+  {
+    "name" : "with",
+    "block" : true,
+    "params" : [
+      {
+        "type" : "pulldown",
+        "defaultValue" : "reverb",
+        "values" : [ "faster", "slower", "louder", "softer", "reverb", "sustain", "distortion" ]
+      }
+    ]
+  },
+
+  {
+    "name" : "repeat",
+    "block" : true,
+    "params" : [
+      {
+        "type" : "pulldown",
+        "defaultValue" : "forever",
+        "values" : [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, "forever" ]
+      }
+    ]
+  },
+
+  {
+    "name" : "chance",
+    "block" : true,
+    "params" : [
+      {
+        "name" : "value",
+        "type" : "range", 
+        "min" : 0.0, 
+        "max" : 100.0, 
+        "step" : 0.5, 
+        "random" : true, 
+        "unit" : "%",
+        "defaultValue" : 4
+      }
+    ]
+  },
+
+  {
+    "name" : "if",
+    "block" : true,
+    "params" : [
+      {
+        "unit" : "?",
+        "type" : "pulldown",
+        "values" : [ "dead end", "intersection" ]
+      }
+    ]
+  },
+
+  {
+    "name" : "jump to",
+    "type" : "call"
+  }
+]

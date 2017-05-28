@@ -1,0 +1,212 @@
+
+.tx-program {
+  box-sizing: border-box;
+  margin: 20px;
+}
+
+.tx-program div {
+  font: 25px sans-serif;
+  display: inline-block;
+  color: rgba(0, 0, 0, 0.8);
+  box-sizing: border-box;
+} 
+
+.tx-line-wrapper {
+  width: 100%;
+}
+
+.tx-line {
+  width: 100%;
+  padding-top: 0.2em;
+  padding-bottom: 0.2em;
+  transition: background-color 0.5s;
+  border-radius: 8px;
+}
+
+.tx-line.tx-highlight {
+  background-color: rgba(150, 200, 255, 0.4);
+}
+
+.tx-line-number {
+  width: 2em;
+  padding-left: 0.2em;
+}
+
+.tx-line-sort {
+  width: 2em;
+  text-align: left;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+.tx-highlight .tx-line-sort {
+  opacity: 1;
+}
+
+.tx-statement-name {
+  padding-left: 0em;
+}
+
+/*
+ * PARAMETERS
+ */
+.tx-parameter {
+  text-decoration: underline;
+  margin-left: 0.3em;
+  position: relative;
+  cursor: pointer;
+}
+
+.tx-param-button {
+  margin-left: 0.2em;
+  border: none;
+  outline: none;
+  background: transparent;  
+}
+
+div.tx-pulldown-menu {
+  position: absolute;
+  min-width: 8em;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  padding: 0.5em 0.5em;
+  z-index: 1;
+  margin: 0;
+  background-color: white;
+  display: none;
+  text-align: left;
+}
+
+.tx-pulldown-menu a {
+  color: black;
+  text-decoration: none;
+  display: block;
+  padding: 0.3em 1em;
+  font-size: 75%;
+}
+
+.tx-pulldown-menu a.selected {
+  background-color: rgba(150, 200, 255, 0.5);
+}
+
+.tx-pulldown-menu a:hover {
+  background-color: rgba(150, 200, 255, 0.2);
+}
+
+.tx-range-slider {
+  width: 20em;
+}
+
+div.tx-range-label, label.tx-range-label {
+  font-size: 60%;
+  position: relative;
+  top: -0.2em;
+  display: block;
+  width: 8em;
+}
+
+div.tx-range-label.max {
+  float: right;
+  text-align: right;
+}
+
+.tx-delete-line {
+  float: right;
+  width: 1.5em;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.5s;
+  border: none;
+  outline: none;
+  background-color: transparent;
+}
+
+.tx-delete-line:active {
+  color: white;
+}
+
+button.tx-add-line {
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  display: none;
+  outline: none;
+  background-color: transparent;
+  border: 1px solid rgba(150, 200, 255, 0.4);
+  border-radius: 0.2em;
+  width: 7em;
+  text-align: right;
+}
+
+button.tx-add-line:active {
+  color: rgba(0, 0, 0, 0.2);
+}
+
+.tx-highlight .tx-delete-line {
+  opacity: 1;
+}
+
+/*
+.tx-statement-menu {
+  margin: 1em 1.5em;
+}
+
+.tx-statement-menu .tx-menu-item {
+  padding: 0.5em 2em 0.5em 0;
+  width: 3em;
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-decoration: none;
+  color: black;
+}
+
+.tx-statement-menu .tx-menu-item:hover {
+  text-decoration: underline;
+}
+
+.tx-statement-menu .tx-menu-item:active {
+  color: red;
+}
+
+.tx-overlay {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.tx-dialog {
+  font: 25px sans-serif;
+  box-sizing: border-box;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 80px;
+  background-color: white;
+  border-radius: 1em;
+  border: 1px solid black;
+  min-height: 100px;
+  padding: 1.5em 2em;
+  width: 75%;
+  position: relative;
+}
+
+.tx-dialog .tx-close-button {
+  position: absolute;
+  top: 0.8em;
+  right: 0.8em;
+  outline: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  text-align: center;
+  background-color: transparent;
+  font-size: 120%;
+}
+
+.tx-dialog .tx-close-button:active {
+  color: rgba(0, 0, 0, 0.3);
+}
+*/

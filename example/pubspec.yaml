@@ -1,0 +1,17 @@
+name: TextualExample
+
+dependencies:
+  browser: any
+  
+  Textual:
+    # if you point to a local copy of NetTango, update the path accordingly
+    path: ..
+    
+    # otherwise, uncomment these lines to use github (preferred)
+    #git:
+    #  url: https://github.com/TIDALLab/Textual.git
+    #  ref: master
+
+transformers:
+- $dart2js:
+    commandLineOptions: [--show-package-warnings]     
