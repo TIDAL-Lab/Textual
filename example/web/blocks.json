@@ -1,4 +1,15 @@
 [
+  { 
+    "name" : "beat",
+    "block" : true,
+    "params" : [
+      {
+        "type" : "string",
+        "defaultValue" : "My Beat"
+      }
+    ]
+  },
+
   { "name" : "strum" },
 
   { "name" : "pluck" },
