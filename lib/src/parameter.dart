@@ -56,6 +56,11 @@ class Parameter {
     if (json.containsKey("type") && json["type"] == "range") {
       return new RangeParameter.fromJSON(json);
     } 
+
+    else if (json.containsKey("type") && json["type"] == "string") {
+      return new StringParameter.fromJSON(json);
+    }
+
     else {
       Parameter p = new Parameter(name);
       if (json.containsKey('values') && json['values'] is List) {
@@ -185,5 +190,47 @@ class RangeParameter extends Parameter {
     });
 
     return menu;
+  }  
+}
+
+
+
+class StringParameter extends Parameter {
+
+  StringParameter(String name) : super(name);
+
+
+  StringParameter.fromJSON(Map data) : super("") {
+    value = toStr(data["defaultValue"]);
+    unit = toStr(data["unit"], "");
+  }
+
+
+  StringParameter clone() {
+    StringParameter p = new StringParameter(name);
+    p.value = value;
+    p.unit = unit;
+    return p;
+  }
+
+
+  Element _renderHtml() {
+
+    DivElement div = new DivElement() .. className = "tx-parameter";
+
+    InputElement input = new InputElement() .. className = "tx-string-param";
+    input.value = value;
+
+    div.append(input);
+
+    input.onClick.listen((e) { 
+      querySelectorAll('.tx-pulldown-menu').style.display = "none";
+      e.stopPropagation();
+    });
+
+    input.onInput.listen((e) {
+      value = input.value;
+    });
+    return div;
   }  
 }
