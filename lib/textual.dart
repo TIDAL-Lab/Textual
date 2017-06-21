@@ -58,6 +58,26 @@ num toNum(var d, [ num defaultValue = 0 ]) {
 }
 
 
+/// parses a DateTime object from an int representing milliseconds since the epoch.
+/// returns DateTime.now() as a default value.
+DateTime toDateTime(var d) {
+  if (d == null) {
+    return new DateTime.now();
+  } 
+  else if (d is int) {
+    return new DateTime.fromMillisecondsSinceEpoch(d);
+  } 
+  else {
+    try {
+      int ms = int.parse(d.toString());
+      return new DateTime.fromMillisecondsSinceEpoch(ms);
+    } on Exception {
+      return new DateTime.now();
+    }
+  }
+}
+
+
 /// parses a bool from an object (usually string or bool)
 bool toBool(var b, [bool defaultValue = false ]) {
   if (b == null) {
