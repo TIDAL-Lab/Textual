@@ -21,6 +21,10 @@ import 'package:Textual/textual.dart';
 void main() {
   Program program = new Program("#content");
   HttpRequest.getString("blocks.json").then((jsonString) {
-    program.loadStatements(JSON.decode(jsonString));
+    program.initMenu(JSON.decode(jsonString));
   });
+
+  program.onProgramChanged = () {
+    print(JSON.encode(program.toJSON()));
+  };
 }
