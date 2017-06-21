@@ -74,7 +74,7 @@ class Statement {
     Statement s = new Statement(name, null, program);
     s.action = action;
     for (Parameter param in params) {
-      s.params.add(param.clone());
+      s.params.add(param.clone(s));
     }
     return s;
   }
@@ -100,12 +100,38 @@ class Statement {
     // parse parameter list from JSON object
     if (json["params"] != null && json["params"] is List) {
       for (var p in json["params"]) {
-        Parameter param = new Parameter.fromJSON(p);
+        Parameter param = new Parameter.fromJSON(p, s);
         if (param != null) s.params.add(param);
       }
     }
 
     return s;
+  }
+
+
+/**
+ * Generate a JSON object for this statement
+ */
+  dynamic toJSON() {
+    var json = { "id" : id, "name" : name, };
+    if (action != null) json["action"] = action;
+
+    if (hasParameters) {
+      json["params"] = [ ];
+      for (Parameter param in params) {
+        json["params"].add(param.toJSON());
+      }
+    }
+
+    if (this is BeginStatement) {
+      json["children"] = [ ];
+      for (Statement child in children) {
+        if (child is! EndStatement) {
+          json["children"].add(child.toJSON());
+        }
+      }
+    }
+    return json;
   }
 
 
@@ -130,6 +156,7 @@ class Statement {
       if (add is BeginStatement) {
         parent.addChild(add._end, add);
       }
+      program._programChanged(add);
     }
   }
 
@@ -143,6 +170,7 @@ class Statement {
       for (int i=0; i<children.length; i++) {
         if (children[i] == afterChild) {
           children.insert(i + 1, newChild);
+          program._programChanged(newChild);
           return;
         }
       }
@@ -150,6 +178,7 @@ class Statement {
     } else {
       children.insert(0, newChild);
     }
+    program._programChanged(newChild);
   }
 
 
@@ -180,6 +209,7 @@ class Statement {
       children.insertAll(index, s.children);
       s.children.clear();
     }
+    program._programChanged(s);
   }
 
 
@@ -289,7 +319,7 @@ class BeginStatement extends Statement {
     BeginStatement begin = new BeginStatement(name, null, program);
     begin.action = action;
     for (Parameter param in params) {
-      begin.params.add(param.clone());
+      begin.params.add(param.clone(begin));
     }
     return begin;
   }
@@ -303,6 +333,7 @@ class BeginStatement extends Statement {
     if (add is BeginStatement) {
       addChild(add._end, add);
     }
+    program._programChanged(add);
   }
 }
 

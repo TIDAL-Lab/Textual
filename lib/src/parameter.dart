@@ -18,51 +18,56 @@ class Parameter {
 
   static int _PARAM_ID = 0;
 
-  // internal unique id number
+  /// internal unique id number
   int id;
 
-  // name of the parameter (OK if null)
+  /// statement that owns this parameter
+  Statement statement;
+
+  /// name of the parameter (OK if null)
   String name;
 
-  // current value of the parameter specified in the program text
+  /// current value of the parameter specified in the program text
   var value;
 
-  // array of possible values (may not be used for all param types)
+  /// array of possible values (may not be used for all param types)
   var values = [];
 
-  // HTML DOM element that holds the current value
+  /// HTML DOM element that holds the current value
   SpanElement _span;
 
   String unit = "";
 
-  Parameter(this.name) {
+
+  Parameter(this.name, this.statement) {
     id = _PARAM_ID++;
   }
 
 
-  Parameter clone() {
-    Parameter p = new Parameter(name);
+  Parameter clone(Statement owner) {
+    Parameter p = new Parameter(name, owner);
     for (var v in values) p.values.add(v);
     p.value = value;
     p.unit = unit;
     return p;
   }
 
+
 /**
  * Factory constructor created from JSON spec
  */
-  factory Parameter.fromJSON(Map json) {
+  factory Parameter.fromJSON(Map json, Statement owner) {
     String name = json['name'];
     if (json.containsKey("type") && json["type"] == "range") {
-      return new RangeParameter.fromJSON(json);
+      return new RangeParameter.fromJSON(json, owner);
     } 
 
     else if (json.containsKey("type") && json["type"] == "string") {
-      return new StringParameter.fromJSON(json);
+      return new StringParameter.fromJSON(json, owner);
     }
 
     else {
-      Parameter p = new Parameter(name);
+      Parameter p = new Parameter(name, owner);
       if (json.containsKey('values') && json['values'] is List) {
         for (var v in json['values']) {
           p.values.add(v);
@@ -75,6 +80,20 @@ class Parameter {
       p.unit = toStr(json['unit']);
       return p;
     }
+  }
+
+
+/**
+ * Exports this parameter to JSON
+ */
+  dynamic toJSON() {
+    var json = {
+      "id" : id,
+      "name" : name,
+      "unit" : unit,
+      "value" : value
+    };
+    return json;
   }
 
 
@@ -119,6 +138,7 @@ class Parameter {
         querySelectorAll(".tx-pulldown-menu a").classes.remove("selected");
         link.classes.add("selected");
         menu.style.display = "none";
+        statement.program._programChanged(statement);
         e.stopPropagation();
       });
     }
@@ -133,10 +153,10 @@ class RangeParameter extends Parameter {
   num _max = 100.0;
   num _step = 1.0;
 
-  RangeParameter(String name) : super(name);
+  RangeParameter(String name, Statement owner) : super(name, owner);
 
 
-  RangeParameter.fromJSON(Map data) : super("") {
+  RangeParameter.fromJSON(Map data, Statement owner) : super("", owner) {
     name = data["name"];
     _min = toNum(data["min"], 0);
     _max = toNum(data["max"], 10);
@@ -150,8 +170,23 @@ class RangeParameter extends Parameter {
   }
 
 
-  RangeParameter clone() {
-    RangeParameter p = new RangeParameter(name);
+/**
+ * Exports this parameter to JSON
+ */
+  dynamic toJSON() {
+    var json = {
+      "type" : "range",
+      "id" : id,
+      "name" : name,
+      "unit" : unit,
+      "value" : value
+    };
+    return json;
+  }
+
+
+  RangeParameter clone(Statement owner) {
+    RangeParameter p = new RangeParameter(name, owner);
     p._min = _min;
     p._max = _max;
     p._step = _step;
@@ -180,6 +215,7 @@ class RangeParameter extends Parameter {
       value = range.valueAsNumber;
       _span.innerHtml = "$value$unit";
       querySelector("#tx-range-label-$id").innerHtml = "$name: $value$unit";
+      statement.program._programChanged(statement);
       e.stopPropagation();
     });
 
@@ -197,17 +233,17 @@ class RangeParameter extends Parameter {
 
 class StringParameter extends Parameter {
 
-  StringParameter(String name) : super(name);
+  StringParameter(String name, Statement owner) : super(name, owner);
 
 
-  StringParameter.fromJSON(Map data) : super("") {
+  StringParameter.fromJSON(Map data, Statement owner) : super("", owner) {
     value = toStr(data["defaultValue"]);
     unit = toStr(data["unit"], "");
   }
 
 
-  StringParameter clone() {
-    StringParameter p = new StringParameter(name);
+  StringParameter clone(Statement owner) {
+    StringParameter p = new StringParameter(name, owner);
     p.value = value;
     p.unit = unit;
     return p;
@@ -226,6 +262,10 @@ class StringParameter extends Parameter {
     input.onClick.listen((e) { 
       querySelectorAll('.tx-pulldown-menu').style.display = "none";
       e.stopPropagation();
+    });
+
+    input.onChange.listen((e) {
+      statement.program._programChanged(statement);
     });
 
     input.onInput.listen((e) {

@@ -22,10 +22,15 @@ class Program {
   String containerId;
 
   /// root elements for the program parse tree
-  List<Statement> children = new List<Statement>;
+  List<Statement> children = new List<Statement>();
+
+
+  /// callback for program changed events
+  Function onProgramChanged = null;
+
 
   /// List of statements that can be added to a program
-  List<BeginStatement> _menu = new List<BeginStatement>();
+  List<Statement> _menu = new List<Statement>();
 
 
   /// Create and insert a new workspace in the specified DIV tag [containerId]
@@ -36,7 +41,7 @@ class Program {
 
 
   /// Parse a list of statement specifications to populate the menu
-  void loadStatements(List json) {
+  void initMenu(List json) {
     for (var config in json) {
       if (config is Map) {
         _menu.add(new Statement.fromJSON(config, this));
@@ -51,15 +56,18 @@ class Program {
 
     // update program line numbers
     int lineNum = 1;
-    for (BeginStatement root in children) {
+    for (Statement root in children) {
       lineNum = root._updateLineNumbers(lineNum);
-      root._end.line = lineNum + 1;
+      if (root is BeginStatement) root._end.line = lineNum + 1;
     }
 
     // create the new div tag
     DivElement div = new DivElement() .. className = "tx-program";
-    root._renderHtml(div);
-    root._end._renderHtml(div);
+
+    for (Statement root in children) {
+      root._renderHtml(div);
+      if (root is BeginStatement) root._end._renderHtml(div);
+    }
 
     // insert or replace the tx-program div
     DivElement container = querySelector("$containerId .tx-program");
@@ -67,6 +75,23 @@ class Program {
       container.replaceWith(div);
     } else {
       querySelector(containerId).append(div);
+    }
+  }
+
+
+  /// generates a JSON representation of this program
+  dynamic toJSON() {
+    var json = [];
+    for (Statement root in children) {
+      json.add(root.toJSON());
+    }
+    return json;
+  }
+
+  /// called whenever the program is changed (fires callback)
+  void _programChanged(Statement changed) {
+    if (onProgramChanged != null) {
+      Function.apply(onProgramChanged, []);
     }
   }
 
