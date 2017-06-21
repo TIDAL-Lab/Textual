@@ -81,9 +81,9 @@ class Statement {
 
 
 /**
- * Factory constructor used to populate the menu
+ * Factory constructor used to populate the block definition menu
  */
-  factory Statement.fromJSON(Map json, Program program) {
+  factory Statement.fromStatementDefinition(Map json, Program program) {
     String name = toStr(json["name"]);
     String action = toStr(json["action"]);
     bool block = toBool(json["block"]);
@@ -104,7 +104,40 @@ class Statement {
         if (param != null) s.params.add(param);
       }
     }
+    return s;
+  }
 
+
+/**
+ * Instantiate a block from JSON
+ */
+  factory Statement.fromJSON(Map json, Program program) {
+    String name = toStr(json["name"]);
+    Statement proto = program._getStatementPrototype(name);
+    Statement s;
+    if (proto != null) {
+      s = proto.clone();
+    } else {
+      s = new Statement.fromStatementDefinition(json, program);
+    }
+    if (json["params"] != null) {
+      for (int i=0; i<json["params"].length; i++) {
+        if (i < s.params.length) {
+          s.params[i].value = json["params"][i]["value"];
+        }
+      }
+    }
+    if (json["children"] != null) {
+      for (var c in json["children"]) {
+        Statement child = new Statement.fromJSON(c, program);
+        child.parent = s;
+        s.children.add(child);
+        if (child is BeginStatement) {
+          child._end.parent = s;
+          s.children.add(child._end);
+        }
+      }
+    }
     return s;
   }
 
@@ -113,7 +146,11 @@ class Statement {
  * Generate a JSON object for this statement
  */
   dynamic toJSON() {
-    var json = { "id" : id, "name" : name, };
+    var json = { 
+      "id" : id, 
+      "name" : name, 
+      "block" : (this is BeginStatement)
+    };
     if (action != null) json["action"] = action;
 
     if (hasParameters) {
@@ -123,7 +160,7 @@ class Statement {
       }
     }
 
-    if (this is BeginStatement) {
+    if (hasChildren) {
       json["children"] = [ ];
       for (Statement child in children) {
         if (child is! EndStatement) {
@@ -132,6 +169,22 @@ class Statement {
       }
     }
     return json;
+  }
+
+
+  /// adds a visual trace to the statement with the given id number. 
+  /// returns true if the statement id was matched
+  bool traceStatement(int id) {
+    if (this.id == id) {
+      querySelectorAll(".tx-line").classes.remove("tx-trace");
+      _div.classes.add("tx-trace");
+      return true;
+    } else {
+      for (Statement s in children) {
+        if (s.traceStatement(id)) return true;
+      }
+    }
+    return false;
   }
 
 
@@ -150,11 +203,11 @@ class Statement {
 /**
  * Adds a new statement to the program right after this statement
  */
-  void insertStatement(Statement add) {
+  void _insertStatement(Statement add) {
     if (parent != null) {
-      parent.addChild(add, this);
+      parent._addChild(add, this);
       if (add is BeginStatement) {
-        parent.addChild(add._end, add);
+        parent._addChild(add._end, add);
       }
       program._programChanged(add);
     }
@@ -164,7 +217,7 @@ class Statement {
 /** 
  * Inserts a new child statement after the existing child
  */
-  void addChild(Statement newChild, [ Statement afterChild = null]) {
+  void _addChild(Statement newChild, [ Statement afterChild = null]) {
     newChild.parent = this;
     if (afterChild != null) {
       for (int i=0; i<children.length; i++) {
@@ -209,7 +262,6 @@ class Statement {
       children.insertAll(index, s.children);
       s.children.clear();
     }
-    program._programChanged(s);
   }
 
 
@@ -218,7 +270,7 @@ class Statement {
     querySelectorAll(".tx-line").classes.remove("tx-highlight");
     querySelectorAll('.tx-pulldown-menu').style.display = "none";
     querySelectorAll(".tx-add-line").style.display = "none";
-    if (parent != null && this is! EndStatement) {
+    if (this is! EndStatement) {
       _div.classes.add("tx-highlight");
       //_div.draggable = true;
       querySelector("#tx-expander-$id").style.display = "inline-block";
@@ -259,8 +311,11 @@ class Statement {
     del.onClick.listen((e) {
       if (parent != null) {
         parent.removeChild(this);
-        program.renderHtml();
+      } else {
+        program._removeChild(this);
       }
+      program._programChanged(this);
+      program._renderHtml();
       e.stopPropagation();
     });
 
@@ -286,7 +341,7 @@ class Statement {
     }
 
     expander.onClick.listen((e) {
-      program.openStatementMenu(expander, this);
+      program._openStatementMenu(expander, this);
     });
 
     wrapper.append(expander);
@@ -328,10 +383,10 @@ class BeginStatement extends Statement {
 /**
  * Adds a new statement to the program right after this statement
  */
-  void insertStatement(Statement add) {
-    addChild(add);
+  void _insertStatement(Statement add) {
+    _addChild(add);
     if (add is BeginStatement) {
-      addChild(add._end, add);
+      _addChild(add._end, add);
     }
     program._programChanged(add);
   }

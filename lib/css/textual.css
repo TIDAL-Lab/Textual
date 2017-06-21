@@ -5,7 +5,7 @@
 }
 
 .tx-program div {
-  font: 25px sans-serif;
+  font: 20px sans-serif;
   display: inline-block;
   color: rgba(0, 0, 0, 0.8);
   box-sizing: border-box;
@@ -25,6 +25,10 @@
 
 .tx-line.tx-highlight {
   background-color: rgba(150, 200, 255, 0.4);
+}
+
+.tx-line.tx-trace {
+  background-color: rgba(100, 255, 100, 0.4);
 }
 
 div.tx-line-number {
@@ -112,7 +116,7 @@ div.tx-range-label.max {
 }
 
 .tx-string-param {
-  font-size: 25px;
+  font-size: 1em;
   text-decoration: underline;
   border: none;
   outline: none;
