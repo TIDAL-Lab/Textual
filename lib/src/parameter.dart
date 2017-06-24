@@ -138,7 +138,7 @@ class Parameter {
         querySelectorAll(".tx-pulldown-menu a").classes.remove("selected");
         link.classes.add("selected");
         menu.style.display = "none";
-        statement.program._programChanged(statement);
+        statement.program._parameterChanged(this);
         e.stopPropagation();
       });
     }
@@ -215,7 +215,7 @@ class RangeParameter extends Parameter {
       value = range.valueAsNumber;
       _span.innerHtml = "$value$unit";
       querySelector("#tx-range-label-$id").innerHtml = "$name: $value$unit";
-      statement.program._programChanged(statement);
+      statement.program._parameterChanged(this);
       e.stopPropagation();
     });
 
@@ -265,7 +265,7 @@ class StringParameter extends Parameter {
     });
 
     input.onChange.listen((e) {
-      statement.program._programChanged(statement);
+      statement.program._parameterChanged(this);
     });
 
     input.onInput.listen((e) {
