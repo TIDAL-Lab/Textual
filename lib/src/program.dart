@@ -21,29 +21,34 @@ class Program {
   /// Name of the DIV tag the workspace is inserted into
   String containerId;
 
-  /// root elements for the program parse tree
-  List<Statement> children = new List<Statement>();
 
+  /// single root element for the entire program
+  BeginStatement root;
 
   /// callback for program changed events
   Function onProgramChanged = null;
+
+
+  /// callback for parameter changed events
+  Function onParameterChanged = null;
+
+
+  /// used to generate code based on Textual statements
+  Map<String, Function> _generators = new Map<String, Function>();
 
 
   /// List of statements that can be added to a program
   List<Statement> _menu = new List<Statement>();
 
 
-  /// Create and insert a new workspace in the specified DIV tag [containerId]
-  Program(this.containerId) {
-    children.add(new BeginStatement("beat", null, this));
-    children.add(children[0]._end);
-    _renderHtml();
+  Program(this.containerId) { 
+    root = new BeginStatement("<root>", null, this);
   }
 
 
   /// erase the current program (doesn't fire a program changed event) 
   void clear() {
-    children.clear();
+    root.children.clear();
     _renderHtml();
   }
 
@@ -60,23 +65,14 @@ class Program {
 
   /// generates a JSON representation of this program
   dynamic toJSON() {
-    var json = [];
-    for (Statement root in children) {
-      json.add(root.toJSON());
-    }
-    return json;
+    return root.toJSON();
   }
 
 
   /// load a program based on a previously saved JSON object
   void fromJSON(var json) {
-    if (json is List) {
-      for (var b in json) {
-        Statement s = new Statement.fromJSON(b, this);
-        children.add(s);
-        if (s is BeginStatement) children.add(s._end);
-      }
-    }
+    clear();
+    root = new Statement.fromJSON(json, this);
     _renderHtml();
   }
 
@@ -84,11 +80,38 @@ class Program {
   /// adds a visual trace to the statement with the given id number. 
   /// returns true if the statement id was matched
   bool traceStatement(int id) {
-    for (Statement root in children) {
-      if (root.traceStatement(id)) return true;
-    }
-    return false;
+    querySelectorAll(".tx-line").classes.remove("tx-trace");
+    return root.traceStatement(id);
   }
+
+
+  /// clear any trace
+  void clearTrace() {
+    querySelectorAll(".tx-line").classes.remove("tx-trace");
+  }
+
+
+  /// add a code generator for a block type (maps to a statements name or action)
+  void addGenerator(String action, Function generator) {
+    _generators[action] = generator;
+  }
+
+
+  /// translates code using generator functions
+  String generateCode() {
+    StringBuffer out = new StringBuffer();
+    _generate(root, out);
+    return out.toString();
+  }
+
+
+  void _generate(Statement s, StringBuffer out) {
+    if (_generators.containsKey(s.action)) {
+      out.writeln(Function.apply(_generators[s.action], [ s ]));
+    }
+    for (Statement child in s.children) _generate(child, out);
+  }
+
 
 
   /// find a block prototype from the menu
@@ -100,37 +123,29 @@ class Program {
   }
 
 
-  /// remove a top-level child
-  void _removeChild(Statement s) {
-    children.remove(s);
-    if (s is BeginStatement) children.remove(s._end);
-  }
-
-
-
   /// Generate the HTML tags that get inserted into the parent DIV. 
   /// This is called automatically by the constructor
   void _renderHtml() {
 
     // update program line numbers
     int lineNum = 0;
-    for (Statement root in children) {
-      lineNum = root._updateLineNumbers(lineNum + 1);
+    for (Statement s in root.children) {
+      lineNum = s._updateLineNumbers(lineNum + 1);
     }
 
     // create the new div tag
     DivElement div = new DivElement() .. className = "tx-program";
 
-    for (Statement root in children) {
-      root._renderHtml(div);
+    for (Statement s in root.children) {
+      s._renderHtml(div);
     }
 
     // insert or replace the tx-program div
-    DivElement container = querySelector("$containerId .tx-program");
+    DivElement container = querySelector("#$containerId .tx-program");
     if (container != null) {
       container.replaceWith(div);
     } else {
-      querySelector(containerId).append(div);
+      querySelector("#$containerId").append(div);
     }
   }
 
@@ -139,6 +154,14 @@ class Program {
   void _programChanged(Statement changed) {
     if (onProgramChanged != null) {
       Function.apply(onProgramChanged, []);
+    }
+  }
+
+
+  /// called whenever a parameter is changed 
+  void _parameterChanged(Parameter param) {
+    if (onParameterChanged != null) {
+      Function.apply(onParameterChanged, []);
     }
   }
 
