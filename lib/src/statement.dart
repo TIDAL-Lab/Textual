@@ -85,7 +85,7 @@ class Statement {
  */
   factory Statement.fromStatementDefinition(Map json, Program program) {
     String name = toStr(json["name"]);
-    String action = toStr(json["action"]);
+    String action = toStr(json["action"], name);
     bool block = toBool(json["block"]);
 
     if (name == "") return null;
@@ -96,7 +96,7 @@ class Statement {
     } else {
       s = new Statement(name, null, program);
     }
-
+    s.action = action;
     // parse parameter list from JSON object
     if (json["params"] != null && json["params"] is List) {
       for (var p in json["params"]) {
@@ -149,9 +149,9 @@ class Statement {
     var json = { 
       "id" : id, 
       "name" : name, 
+      "action" : action,
       "block" : (this is BeginStatement)
     };
-    if (action != null) json["action"] = action;
 
     if (hasParameters) {
       json["params"] = [ ];
@@ -176,7 +176,6 @@ class Statement {
   /// returns true if the statement id was matched
   bool traceStatement(int id) {
     if (this.id == id) {
-      querySelectorAll(".tx-line").classes.remove("tx-trace");
       _div.classes.add("tx-trace");
       return true;
     } else {
@@ -270,11 +269,9 @@ class Statement {
     querySelectorAll(".tx-line").classes.remove("tx-highlight");
     querySelectorAll('.tx-pulldown-menu').style.display = "none";
     querySelectorAll(".tx-add-line").style.display = "none";
-    if (this is! EndStatement) {
-      _div.classes.add("tx-highlight");
-      //_div.draggable = true;
-      querySelector("#tx-expander-$id").style.display = "inline-block";
-    }
+    _div.classes.add("tx-highlight");
+    //_div.draggable = true;
+    querySelector("#tx-expander-$id").style.display = "inline-block";
   }
 
 
@@ -311,8 +308,6 @@ class Statement {
     del.onClick.listen((e) {
       if (parent != null) {
         parent.removeChild(this);
-      } else {
-        program._removeChild(this);
       }
       program._programChanged(this);
       program._renderHtml();
