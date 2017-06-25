@@ -104,7 +104,7 @@ class Parameter {
     div.append(_span);
 
     ButtonElement button = new ButtonElement() .. className = "tx-param-button fa fa-caret-down";
-    div.append(button);
+    //div.append(button);
 
     DivElement menu = _renderMenu();
     div.append(menu);
