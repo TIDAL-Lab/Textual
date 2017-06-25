@@ -56,10 +56,18 @@ div.tx-line-number {
  * PARAMETERS
  */
 .tx-parameter {
-  text-decoration: underline;
-  margin-left: 0.3em;
+  /*margin-left: 0.3em;*/
   position: relative;
   cursor: pointer;
+}
+
+.tx-parameter:hover {
+  text-decoration: underline;
+  /* text-decoration-color: rgba(0, 0, 0, 0.5); */
+}
+
+.tx-parameter:active {
+  color: red;
 }
 
 .tx-param-button {
