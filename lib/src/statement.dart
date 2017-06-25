@@ -289,12 +289,20 @@ class Statement {
     // statement name 
     DivElement stmt = new DivElement() .. className = "tx-statement-name";
     stmt.innerHtml = name;
-    stmt.style.paddingLeft = "${depth * 1.2}em";
+    stmt.style.paddingLeft = "${(depth - 1) * 1.2}em";
     _div.append(stmt);
 
     // parameter pulldowns 
-    for (Parameter p in params) {
-      _div.append(p._renderHtml());
+    if (this is! EndStatement) {
+      _div.appendHtml("<span> (</span>");
+      for (int i=0; i<params.length; i++) {
+        Parameter p = params[i];
+        _div.append(p._renderHtml());
+        if (i >= 0 && i < params.length - 1) {
+          _div.appendHtml("<span>, </span>");
+        }
+      }
+      _div.appendHtml("<span>)</span>");
     }
 
     // delete button
@@ -325,13 +333,18 @@ class Statement {
     expander.id = "tx-expander-$id";
     expander.dataset["line-number"] = "$line";
     if (this is BeginStatement) {
-      expander.style.marginLeft = "${2 + (depth + 1) * 1.2}em";
-    } else {
       expander.style.marginLeft = "${2 + depth * 1.2}em";
+    } else {
+      expander.style.marginLeft = "${2 + (depth - 1) * 1.2}em";
     }
 
     // show the expander button if this is an empty begin/end bracket
     if (this is BeginStatement && !hasChildren) {
+      expander.style.display = "inline-block";
+    }
+
+    // show the expander button if this is the last statement in the program
+    if (program._isLastStatement(this)) {
       expander.style.display = "inline-block";
     }
 
@@ -362,6 +375,7 @@ class BeginStatement extends Statement {
     super(name, parent, program) 
   {
     _end = new EndStatement("end $name", parent, program);
+    _end.action = "end-$name";
   }
 
 
