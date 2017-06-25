@@ -166,6 +166,12 @@ class Program {
   }
 
 
+  /// is [s] the last statement in the program?
+  bool _isLastStatement(Statement s) {
+    return (root.children.last == s);
+  }
+
+
   /// Creates a statement pulldown menu below the [expander] element
   void _openStatementMenu(Element expander, Statement after) {
     querySelectorAll('.tx-pulldown-menu').style.display = "none";
