@@ -41,7 +41,7 @@ class Program {
   List<Statement> _menu = new List<Statement>();
 
 
-  Program(this.containerId) { 
+  Program() { 
     root = new BeginStatement("<root>", null, this);
   }
 
@@ -113,6 +113,22 @@ class Program {
   }
 
 
+  /// Generate the HTML tags that get inserted into the parent DIV. 
+  /// This is called automatically by the constructor
+  void renderHtml(String containerId) {
+    this.containerId = containerId;
+    _renderHtml();
+  }
+
+
+  /// find the insertion point for a statement being dragged.
+  /// the dragged statement gets inserted after the insertion point.
+  Statement _findInsertionPoint(num ty) {
+    if (root.children.isEmpty) return root;
+    Statement result = root._findInsertionPoint(ty);
+    return (result == null) ? root.children.last : result;
+  }
+
 
   /// find a block prototype from the menu
   Statement _getStatementPrototype(String name) {
@@ -123,29 +139,40 @@ class Program {
   }
 
 
-  /// Generate the HTML tags that get inserted into the parent DIV. 
-  /// This is called automatically by the constructor
   void _renderHtml() {
 
-    // update program line numbers
-    int lineNum = 0;
-    for (Statement s in root.children) {
-      lineNum = s._updateLineNumbers(lineNum + 1);
-    }
+    if (containerId != null && querySelector("#$containerId") != null) {
 
-    // create the new div tag
-    DivElement div = new DivElement() .. className = "tx-program";
+      // update program line numbers
+      int lineNum = 0;
+      for (Statement s in root.children) {
+        lineNum = s._updateLineNumbers(lineNum + 1);
+      }
 
-    for (Statement s in root.children) {
-      s._renderHtml(div);
-    }
+      // create the new div tag
+      DivElement div = new DivElement() .. className = "tx-program";
 
-    // insert or replace the tx-program div
-    DivElement container = querySelector("#$containerId .tx-program");
-    if (container != null) {
-      container.replaceWith(div);
-    } else {
-      querySelector("#$containerId").append(div);
+      DivElement insert = new DivElement() .. className = "tx-insertion-line";
+      insert.id = "tx-insertion-${root.id}";
+      insert.style.marginLeft = "2em";
+      div.append(insert);
+
+      for (Statement s in root.children) {
+        s._renderHtml(div);
+      }
+
+      div.onClick.listen((e) {
+        querySelectorAll('.tx-pulldown-menu').style.display = "none";
+      });
+
+
+      // insert or replace the tx-program div
+      DivElement container = querySelector("#$containerId .tx-program");
+      if (container != null) {
+        container.replaceWith(div);
+      } else {
+        querySelector("#$containerId").append(div);
+      }
     }
   }
 
