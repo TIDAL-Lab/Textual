@@ -115,9 +115,10 @@ class CodeBeat {
 
   /// instantiate the instrument by inserting it inside the container DOM element
   void open(String containerId) {
-    program = new Program(containerId);
+    program = new Program();
     program.loadStatementDefinitions(blocks);
     program.fromJSON(defaultProgram);
+    program.renderHtml(containerId);
     program.onProgramChanged = () {
       print(JSON.encode(program.toJSON()));
     };
