@@ -9,6 +9,7 @@
   display: inline-block;
   color: rgba(0, 0, 0, 0.8);
   box-sizing: border-box;
+  background-color: transparent;
 } 
 
 .tx-line-wrapper {
@@ -29,6 +30,7 @@
 
 .tx-line.tx-trace {
   background-color: rgba(100, 255, 100, 0.4);
+  transition: background-color none;
 }
 
 div.tx-line-number {
@@ -52,6 +54,18 @@ div.tx-line-number {
   padding-left: 0em;
 }
 
+div.tx-insertion-line {
+  width: 7em;
+  height: 0.2em;
+  background-color: red;
+  display: block;
+  visibility: hidden;
+}
+
+div.tx-insertion-line.show {
+  visibility: visible;
+}
+
 /*
  * PARAMETERS
  */
@@ -70,11 +84,20 @@ div.tx-line-number {
   color: red;
 }
 
-.tx-param-button {
+.tx-highlight .tx-parameter {
+  text-decoration: underline;
+}
+
+button.tx-param-button {
   margin-left: 0.2em;
   border: none;
   outline: none;
   background: transparent;  
+  display: none;
+}
+
+.tx-highlight .tx-param-button {
+  display: inline-block;
 }
 
 div.tx-pulldown-menu {
@@ -156,7 +179,7 @@ button.tx-add-line {
   padding-right: 0.5em;
   display: none;
   outline: none;
-  background-color: transparent;
+  background-color: white;
   border: 1px solid rgba(150, 200, 255, 0.4);
   border-radius: 0.2em;
   width: 7em;
