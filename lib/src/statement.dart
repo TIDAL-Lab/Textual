@@ -270,9 +270,75 @@ class Statement {
     querySelectorAll('.tx-pulldown-menu').style.display = "none";
     querySelectorAll(".tx-add-line").style.display = "none";
     _div.classes.add("tx-highlight");
-    //_div.draggable = true;
     querySelector("#tx-expander-$id").style.display = "inline-block";
   }
+
+
+  num get _insertionPoint {
+    if (_div != null) {
+      var rect = _div.getBoundingClientRect();
+      return rect.bottom + rect.height;
+    } else if (this == program.root && hasChildren && children[0]._div != null) {
+      var rect = children[0]._div.getBoundingClientRect();
+      return rect.bottom;
+    } else {
+      return 100000;
+    }
+  }
+
+
+  /// find the insertion point for a statement being dragged.
+  /// the dragged statement gets inserted after the insertion point.
+  Statement _findInsertionPoint(num ty) {
+    if (ty <= _insertionPoint) return this;
+
+    for (Statement child in children) {
+      Statement result = child._findInsertionPoint(ty);
+      if (result != null) return result;
+    }
+    return null;
+  }
+
+
+  /// drag start event
+  void _dragStart(var event) {
+    event.dataTransfer.setData("statement", id);
+    querySelectorAll(".tx-add-line").style.display = "none";
+    querySelectorAll('.tx-pulldown-menu').style.display = "none";
+  }
+
+
+  /// drag end event
+  void _dragEnd(var event) {
+    Statement insertion = program._findInsertionPoint(event.client.y);
+    if (insertion != this) {
+      if (this is! BeginStatement && this is! EndStatement) {
+        parent.removeChild(this);
+        if (insertion is BeginStatement || insertion == program.root) {
+          insertion._addChild(this);
+        } else {
+          insertion.parent._addChild(this, insertion);
+        }
+        program._programChanged(this);
+        program._renderHtml();
+      }
+    }
+    querySelectorAll(".tx-insertion-line").classes.remove("show");
+  }
+
+
+  /// drag over event
+  void _dragOver(var event) {
+    Statement insertion = program._findInsertionPoint(event.client.y);
+    if (insertion != null) {
+      DivElement el = querySelector("#tx-insertion-${insertion.id}");
+      if (el != null && !el.classes.contains("show")) {
+        querySelectorAll(".tx-insertion-line").classes.remove("show");
+        el.classes.add("show");
+      }
+    }
+  }
+
 
 
 /**
@@ -304,13 +370,20 @@ class Statement {
       }
       _div.appendHtml("<span>)</span>");
     }
+    if (this is BeginStatement) {
+      _div.appendHtml("<span>:</span>");
+    }
 
     // delete button
     ButtonElement del = new ButtonElement() .. className = "tx-delete-line fa fa-times-circle";
     _div.append(del);
 
     // highlight the line when you click on it
+    _div.draggable = (this is! BeginStatement && this is! EndStatement);
     _div.onClick.listen((e) { _highlightLine(); });
+    _div.onDragStart.listen(_dragStart);
+    _div.onDragEnd.listen(_dragEnd);
+    _div.onDragOver.listen(_dragOver);
 
     // delete a line when you click on the button
     del.onClick.listen((e) {
@@ -328,15 +401,20 @@ class Statement {
     wrapper.draggable = false;  // only draggable when you're highlighted
     wrapper.append(_div);
 
+    // insertion point
+    num indent = 2 + ((this is BeginStatement) ? depth : depth - 1) * 1.2;
+
+    DivElement insert = new DivElement() .. className = "tx-insertion-line";
+    insert.id = "tx-insertion-$id";
+    insert.style.marginLeft = "${indent}em";
+    wrapper.append(insert);
+
     // expander button
     ButtonElement expander = new ButtonElement() .. className = "tx-add-line fa fa-caret-down";
     expander.id = "tx-expander-$id";
     expander.dataset["line-number"] = "$line";
-    if (this is BeginStatement) {
-      expander.style.marginLeft = "${2 + depth * 1.2}em";
-    } else {
-      expander.style.marginLeft = "${2 + (depth - 1) * 1.2}em";
-    }
+    expander.style.marginLeft = "${indent}em";
+
 
     // show the expander button if this is an empty begin/end bracket
     if (this is BeginStatement && !hasChildren) {
@@ -350,6 +428,7 @@ class Statement {
 
     expander.onClick.listen((e) {
       program._openStatementMenu(expander, this);
+      e.stopPropagation();
     });
 
     wrapper.append(expander);
