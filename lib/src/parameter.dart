@@ -110,13 +110,21 @@ class Parameter {
     div.append(menu);
 
     _span.onClick.listen((e) { 
-      querySelectorAll('.tx-pulldown-menu').style.display = "none";
-      menu.style.display = "block"; 
+      if (menu.style.display == "block") {
+        querySelectorAll('.tx-pulldown-menu').style.display = "none";
+      } else {
+        querySelectorAll('.tx-pulldown-menu').style.display = "none";
+        menu.style.display = "block"; 
+      }
       e.stopPropagation();
     });
     button.onClick.listen((e) { 
-      querySelectorAll('.tx-pulldown-menu').style.display = "none";
-      menu.style.display = "block"; 
+      if (menu.style.display == "block") {
+        querySelectorAll('.tx-pulldown-menu').style.display = "none";
+      } else {
+        querySelectorAll('.tx-pulldown-menu').style.display = "none";
+        menu.style.display = "block"; 
+      }
       e.stopPropagation();
     });
 
