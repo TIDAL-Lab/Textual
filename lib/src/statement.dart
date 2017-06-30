@@ -359,7 +359,7 @@ class Statement {
     _div.append(stmt);
 
     // parameter pulldowns 
-    if (this is! EndStatement) {
+    if (hasParameters) {
       _div.appendHtml("<span> (</span>");
       for (int i=0; i<params.length; i++) {
         Parameter p = params[i];

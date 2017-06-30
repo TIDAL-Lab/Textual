@@ -80,7 +80,7 @@ class Program {
   /// adds a visual trace to the statement with the given id number. 
   /// returns true if the statement id was matched
   bool traceStatement(int id) {
-    querySelectorAll(".tx-line").classes.remove("tx-trace");
+    //querySelectorAll(".tx-line").classes.remove("tx-trace");
     return root.traceStatement(id);
   }
 
