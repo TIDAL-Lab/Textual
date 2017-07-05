@@ -25,11 +25,18 @@
 
 .tx-line.tx-highlight {
   background-color: rgba(150, 200, 255, 0.4);
+  border: 1px solid #999;
+  box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.3);
 }
 
 .tx-line.tx-trace {
   background-color: rgba(100, 255, 100, 0.4);
   transition: background-color none;
+}
+
+.tx-line.dragging {
+  border: 1px solid #999;
+  box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.3);
 }
 
 div.tx-line-number {
@@ -39,13 +46,17 @@ div.tx-line-number {
 }
 
 .tx-line-sort {
-  width: 2em;
+  width: 1em;
   text-align: left;
   opacity: 0;
   transition: opacity 0.25s;
 }
 
 .tx-highlight .tx-line-sort {
+  opacity: 1;
+}
+
+.dragging .tx-line-sort {
   opacity: 1;
 }
 

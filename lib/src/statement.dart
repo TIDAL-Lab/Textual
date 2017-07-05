@@ -305,6 +305,7 @@ class Statement {
     event.dataTransfer.setData("statement", id);
     querySelectorAll(".tx-add-line").style.display = "none";
     querySelectorAll('.tx-pulldown-menu').style.display = "none";
+    _div.classes.add("dragging");
   }
 
 
@@ -323,6 +324,7 @@ class Statement {
         program._renderHtml();
       }
     }
+    _div.classes.remove("dragging");
     querySelectorAll(".tx-insertion-line").classes.remove("show");
   }
 
@@ -350,7 +352,11 @@ class Statement {
     _div = new DivElement() .. className = "tx-line";
     _div.id = "tx-line-$id";
     _div.appendHtml("<div id='tx-line-number-$id' class='tx-line-number'>${line}</div>");
-    //_div.appendHtml("<div class='tx-line-sort'><span class='fa fa-sort'></span></div>");
+    if (this is BeginStatement || this is EndStatement) {
+      _div.appendHtml("<div class='tx-line-sort'></div>");
+    } else {
+      _div.appendHtml("<div class='tx-line-sort'><span class='fa fa-sort'></span></div>");
+    }
 
     // statement name 
     DivElement stmt = new DivElement() .. className = "tx-statement-name";
