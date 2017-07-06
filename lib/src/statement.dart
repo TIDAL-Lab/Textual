@@ -73,6 +73,12 @@ class Statement {
   String get symbol => "$action-$id";
 
 
+/** 
+ * Type of statement (begin, end, clause, or statement)
+ */
+  String get stype => "statement";
+
+
 /**
  * Used to clone statements in the menu. All subclasses implement this.
  */
@@ -92,17 +98,20 @@ class Statement {
   factory Statement.fromStatementDefinition(Map json, Program program, [ bool isClause = false ]) {
     String name = toStr(json["name"]);
     String action = toStr(json["action"], name);
-    bool block = toBool(json["block"]) || isClause;
+    String type = toStr(json["type"], isClause ? "clause" : "statement");
 
     if (name == "") return null;
     
     Statement s;
-    if (isClause) {
+    if (type == "begin") {
+      s = new BeginStatement(name, null, program);
+    }
+    else if (type == "clause") {
       s = new ClauseStatement(name, null, program);
     }
-    else if (block) {
-      s = new BeginStatement(name, null, program);
-    } 
+    else if (type == "end") {
+      s = new EndStatement(name, null, program);
+    }
     else {
       s = new Statement(name, null, program);
     }
@@ -190,13 +199,10 @@ class Statement {
   dynamic toJSON() {
     var json = { 
       "id" : id, 
-      "name" : name, 
-      "action" : action
+      "name" : name,
+      "action" : action,
+      "type" : stype
     };
-
-    if (this is ControlStatement) {
-      json["block"] = true;
-    }
 
     if (hasParameters) {
       json["params"] = [ ];
@@ -559,6 +565,7 @@ class BeginStatement extends ControlStatement {
     return begin;
   }
 
+  String get stype => "begin";
 }
 
 
@@ -580,6 +587,8 @@ class ClauseStatement extends ControlStatement {
     }
     return clause;
   }
+
+  String get stype => "clause";
 }
 
 
@@ -591,6 +600,7 @@ class EndStatement extends Statement {
   EndStatement(String name, Statement parent, Program program) : 
     super(name, parent, program);
 
+  String get stype => "end";
 }
 
 
