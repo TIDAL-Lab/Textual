@@ -68,6 +68,12 @@ class Statement {
 
 
 /**
+ * Returns a unique symbol name for this statement
+ */
+  String get symbol => "$action-$id";
+
+
+/**
  * Used to clone statements in the menu. All subclasses implement this.
  */
   Statement clone() {
@@ -167,7 +173,7 @@ class Statement {
           begin.clauses.clear();
         }
         else if (child is EndStatement) {
-          if (begin != null) begin._end = child;
+          if (begin != null) begin.end = child;
         }
         else if (child is ClauseStatement) {
           if (begin != null) begin.clauses.add(child);
@@ -248,7 +254,7 @@ class Statement {
           parent._addChild(clause, cs);
           cs = clause;
         }
-        parent._addChild(add._end, cs);
+        parent._addChild(add.end, cs);
       }
       program._programChanged(add);
     }
@@ -264,7 +270,6 @@ class Statement {
       for (int i=0; i<children.length; i++) {
         if (children[i] == afterChild) {
           children.insert(i + 1, newChild);
-          program._programChanged(newChild);
           return;
         }
       }
@@ -272,7 +277,6 @@ class Statement {
     } else {
       children.insert(0, newChild);
     }
-    program._programChanged(newChild);
   }
 
 
@@ -301,7 +305,7 @@ class Statement {
         for (ClauseStatement clause in s.clauses) {
           children.remove(clause);
         }
-        children.remove(s._end);
+        children.remove(s.end);
       }
 
       for (Statement child in s.children) child.parent = this;
@@ -516,7 +520,7 @@ abstract class ControlStatement extends Statement {
         _addChild(clause, cs);
         cs = clause;
       }
-      _addChild(add._end, cs);
+      _addChild(add.end, cs);
     }
     program._programChanged(add);
   }
@@ -529,7 +533,7 @@ abstract class ControlStatement extends Statement {
 class BeginStatement extends ControlStatement {
 
   /// corresponding end statement
-  EndStatement _end;
+  EndStatement end;
 
   /// intermediate clauses (e.g. else if, else, otherwise)
   List<ClauseStatement> clauses = new List<ClauseStatement>();
@@ -538,8 +542,8 @@ class BeginStatement extends ControlStatement {
   BeginStatement(String name, Statement parent, Program program) : 
     super(name, parent, program) 
   {
-    _end = new EndStatement("end $name", parent, program);
-    _end.action = "end-$name";
+    end = new EndStatement("end $name", parent, program);
+    end.action = "end-$name";
   }
 
 
