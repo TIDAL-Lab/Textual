@@ -131,9 +131,9 @@ class Program {
 
 
   /// find a block prototype from the menu
-  Statement _getStatementPrototype(String name) {
+  Statement _getStatementPrototype(String action) {
     for (Statement s in _menu) {
-      if (s.name == name) return s;
+      if (s.action == action) return s;
     }
     return null;
   }
@@ -205,7 +205,6 @@ class Program {
     DivElement hmenu = new DivElement() .. classes.add('tx-pulldown-menu');
     for (Statement s in _menu) {
       AnchorElement link = new AnchorElement(href : "#") .. innerHtml = "${s.name}";
-      if (s.hasParameters) link.innerHtml += " ... ";
       hmenu.append(link);
       link.onClick.listen((e) {
         hmenu.style.display = "none";
