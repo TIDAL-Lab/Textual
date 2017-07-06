@@ -83,25 +83,37 @@ class Statement {
 /**
  * Factory constructor used to populate the block definition menu
  */
-  factory Statement.fromStatementDefinition(Map json, Program program) {
+  factory Statement.fromStatementDefinition(Map json, Program program, [ bool isClause = false ]) {
     String name = toStr(json["name"]);
     String action = toStr(json["action"], name);
-    bool block = toBool(json["block"]);
+    bool block = toBool(json["block"]) || isClause;
 
     if (name == "") return null;
     
     Statement s;
-    if (block) {
+    if (isClause) {
+      s = new ClauseStatement(name, null, program);
+    }
+    else if (block) {
       s = new BeginStatement(name, null, program);
-    } else {
+    } 
+    else {
       s = new Statement(name, null, program);
     }
     s.action = action;
+
     // parse parameter list from JSON object
-    if (json["params"] != null && json["params"] is List) {
+    if (json["params"] is List) {
       for (var p in json["params"]) {
         Parameter param = new Parameter.fromJSON(p, s);
         if (param != null) s.params.add(param);
+      }
+    }
+
+    // parse clauses for begin statements
+    if (s is BeginStatement && json["clauses"] is List) {
+      for (var c in json["clauses"]) {
+        s.clauses.add(new Statement.fromStatementDefinition(c, program, true));
       }
     }
     return s;
@@ -109,17 +121,26 @@ class Statement {
 
 
 /**
- * Instantiate a block from JSON
+ * Instantiate a block from JSON (to restore programs)
  */
   factory Statement.fromJSON(Map json, Program program) {
     String name = toStr(json["name"]);
-    Statement proto = program._getStatementPrototype(name);
+    String action = toStr(json["action"], name);
+
+    //---------------------------------------------------------
+    // look up the statement prototype and clone it
+    //---------------------------------------------------------
+    Statement proto = program._getStatementPrototype(action);
     Statement s;
     if (proto != null) {
       s = proto.clone();
     } else {
       s = new Statement.fromStatementDefinition(json, program);
     }
+
+    //---------------------------------------------------------
+    // parse parameter values
+    //---------------------------------------------------------
     if (json["params"] != null) {
       for (int i=0; i<json["params"].length; i++) {
         if (i < s.params.length) {
@@ -127,14 +148,29 @@ class Statement {
         }
       }
     }
+
+    //---------------------------------------------------------
+    // recursively parse children
+    //---------------------------------------------------------
     if (json["children"] != null) {
+      BeginStatement begin = null;
       for (var c in json["children"]) {
         Statement child = new Statement.fromJSON(c, program);
         child.parent = s;
         s.children.add(child);
+
+        //-----------------------------------------------------
+        // begins get matched with end statements and clauses
+        //-----------------------------------------------------
         if (child is BeginStatement) {
-          child._end.parent = s;
-          s.children.add(child._end);
+          begin = child;
+          begin.clauses.clear();
+        }
+        else if (child is EndStatement) {
+          if (begin != null) begin._end = child;
+        }
+        else if (child is ClauseStatement) {
+          if (begin != null) begin.clauses.add(child);
         }
       }
     }
@@ -149,9 +185,12 @@ class Statement {
     var json = { 
       "id" : id, 
       "name" : name, 
-      "action" : action,
-      "block" : (this is BeginStatement)
+      "action" : action
     };
+
+    if (this is ControlStatement) {
+      json["block"] = true;
+    }
 
     if (hasParameters) {
       json["params"] = [ ];
@@ -163,9 +202,7 @@ class Statement {
     if (hasChildren) {
       json["children"] = [ ];
       for (Statement child in children) {
-        if (child is! EndStatement) {
-          json["children"].add(child.toJSON());
-        }
+        json["children"].add(child.toJSON());
       }
     }
     return json;
@@ -206,7 +243,12 @@ class Statement {
     if (parent != null) {
       parent._addChild(add, this);
       if (add is BeginStatement) {
-        parent._addChild(add._end, add);
+        ControlStatement cs = add;
+        for (ClauseStatement clause in add.clauses) {
+          parent._addChild(clause, cs);
+          cs = clause;
+        }
+        parent._addChild(add._end, cs);
       }
       program._programChanged(add);
     }
@@ -240,6 +282,8 @@ class Statement {
  */
   void removeChild(Statement s) {
 
+    if (s is EndStatement || s is ClauseStatement) return;
+
     // find the child index
     int index = -1;
     for (int i=0; i<children.length; i++) {
@@ -254,6 +298,9 @@ class Statement {
 
       // move grandchildren up a level
       if (s is BeginStatement) {
+        for (ClauseStatement clause in s.clauses) {
+          children.remove(clause);
+        }
         children.remove(s._end);
       }
 
@@ -313,9 +360,9 @@ class Statement {
   void _dragEnd(var event) {
     Statement insertion = program._findInsertionPoint(event.client.y);
     if (insertion != this) {
-      if (this is! BeginStatement && this is! EndStatement) {
+      if (this is! ControlStatement && this is! EndStatement) {
         parent.removeChild(this);
-        if (insertion is BeginStatement || insertion == program.root) {
+        if (insertion is ControlStatement || insertion == program.root) {
           insertion._addChild(this);
         } else {
           insertion.parent._addChild(this, insertion);
@@ -352,7 +399,7 @@ class Statement {
     _div = new DivElement() .. className = "tx-line";
     _div.id = "tx-line-$id";
     _div.appendHtml("<div id='tx-line-number-$id' class='tx-line-number'>${line}</div>");
-    if (this is BeginStatement || this is EndStatement) {
+    if (this is ControlStatement || this is EndStatement) {
       _div.appendHtml("<div class='tx-line-sort'></div>");
     } else {
       _div.appendHtml("<div class='tx-line-sort'><span class='fa fa-sort'></span></div>");
@@ -376,30 +423,32 @@ class Statement {
       }
       _div.appendHtml("<span>)</span>");
     }
-    if (this is BeginStatement) {
+    if (this is ControlStatement) {
       _div.appendHtml("<span>:</span>");
     }
 
     // delete button
-    ButtonElement del = new ButtonElement() .. className = "tx-delete-line fa fa-times-circle";
-    _div.append(del);
+    if (this is! EndStatement && this is! ClauseStatement) {
+      ButtonElement del = new ButtonElement() .. className = "tx-delete-line fa fa-times-circle";
+      _div.append(del);
+
+      // delete a line when you click on the button
+      del.onClick.listen((e) {
+        if (parent != null) {
+          parent.removeChild(this);
+        }
+        program._programChanged(this);
+        program._renderHtml();
+        e.stopPropagation();
+      });
+    }
 
     // highlight the line when you click on it
-    _div.draggable = (this is! BeginStatement && this is! EndStatement);
+    _div.draggable = (this is! ControlStatement && this is! EndStatement);
     _div.onClick.listen((e) { _highlightLine(); });
     _div.onDragStart.listen(_dragStart);
     _div.onDragEnd.listen(_dragEnd);
     _div.onDragOver.listen(_dragOver);
-
-    // delete a line when you click on the button
-    del.onClick.listen((e) {
-      if (parent != null) {
-        parent.removeChild(this);
-      }
-      program._programChanged(this);
-      program._renderHtml();
-      e.stopPropagation();
-    });
 
     // wrapper contains the expander as well
     DivElement wrapper = new DivElement() .. classes.add("tx-line-wrapper");
@@ -408,7 +457,7 @@ class Statement {
     wrapper.append(_div);
 
     // insertion point
-    num indent = 2 + ((this is BeginStatement) ? depth : depth - 1) * 1.2;
+    num indent = 2 + ((this is ControlStatement) ? depth : depth - 1) * 1.2;
 
     DivElement insert = new DivElement() .. className = "tx-insertion-line";
     insert.id = "tx-insertion-$id";
@@ -423,7 +472,7 @@ class Statement {
 
 
     // show the expander button if this is an empty begin/end bracket
-    if (this is BeginStatement && !hasChildren) {
+    if (this is ControlStatement && !hasChildren) {
       expander.style.display = "inline-block";
     }
 
@@ -447,13 +496,43 @@ class Statement {
 }
 
 
+/**
+ * Generic superclass for all control statements (begin and clause).
+ */
+abstract class ControlStatement extends Statement {
+
+  ControlStatement(String name, Statement parent, Program program) :
+    super(name, parent, program);
+
+
+/**
+ * Adds a new statement to the program right after this statement
+ */
+  void _insertStatement(Statement add) {
+    _addChild(add);
+    if (add is BeginStatement) {
+      ControlStatement cs = add;
+      for (ClauseStatement clause in add.clauses) {
+        _addChild(clause, cs);
+        cs = clause;
+      }
+      _addChild(add._end, cs);
+    }
+    program._programChanged(add);
+  }
+}
+
+
 /** 
  * BeginStatements have children with a begin/end block structure
  */
-class BeginStatement extends Statement {
+class BeginStatement extends ControlStatement {
 
   /// corresponding end statement
   EndStatement _end;
+
+  /// intermediate clauses (e.g. else if, else, otherwise)
+  List<ClauseStatement> clauses = new List<ClauseStatement>();
 
 
   BeginStatement(String name, Statement parent, Program program) : 
@@ -470,19 +549,32 @@ class BeginStatement extends Statement {
     for (Parameter param in params) {
       begin.params.add(param.clone(begin));
     }
+    for (ClauseStatement clause in clauses) {
+      begin.clauses.add(clause.clone());
+    }
     return begin;
   }
 
+}
+
 
 /**
- * Adds a new statement to the program right after this statement
+ * ClauseStatements fall between begin and end statements. They include
+ * things like 'else', 'else if', and so on.
  */
-  void _insertStatement(Statement add) {
-    _addChild(add);
-    if (add is BeginStatement) {
-      _addChild(add._end, add);
+class ClauseStatement extends ControlStatement {
+
+  ClauseStatement(String name, Statement parent, Program program) : 
+    super(name, parent, program);
+
+
+  ClauseStatement clone() {
+    ClauseStatement clause = new ClauseStatement(name, null, program);
+    clause.action = action;
+    for (Parameter param in params) {
+      clause.params.add(param.clone(clause));
     }
-    program._programChanged(add);
+    return clause;
   }
 }
 
