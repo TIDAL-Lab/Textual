@@ -147,6 +147,7 @@ class Parameter {
         link.classes.add("selected");
         menu.style.display = "none";
         statement.program._parameterChanged(this);
+        e.preventDefault();
         e.stopPropagation();
       });
     }
@@ -225,6 +226,7 @@ class RangeParameter extends Parameter {
       querySelector("#tx-range-label-$id").innerHtml = "$name: $value$unit";
       statement.program._parameterChanged(this);
       e.stopPropagation();
+      e.preventDefault();
     });
 
     range.onInput.listen((e) {

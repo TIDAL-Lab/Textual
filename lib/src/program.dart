@@ -214,6 +214,7 @@ class Program {
         _renderHtml();
         clone._highlightLine();
         e.stopPropagation();
+        e.preventDefault();
       });
     }
     expander.append(hmenu);
