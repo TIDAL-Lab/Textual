@@ -368,19 +368,19 @@ class Statement {
 
   /// drag end event
   void _dragEnd(var event) {
-    Statement insertion = program._findInsertionPoint(event.client.y);
-    if (insertion != this) {
+    if (_insertion != this && _insertion != null) {
       if (this is! ControlStatement && this is! EndStatement) {
         parent.removeChild(this);
-        if (insertion is ControlStatement || insertion == program.root) {
-          insertion._addChild(this);
+        if (_insertion is ControlStatement || _insertion == program.root) {
+          _insertion._addChild(this);
         } else {
-          insertion.parent._addChild(this, insertion);
+          _insertion.parent._addChild(this, _insertion);
         }
         program._programChanged(this);
         program._renderHtml();
       }
     }
+    _insertion = null;
     _div.classes.remove("dragging");
     querySelectorAll(".tx-insertion-line").classes.remove("show");
   }
@@ -388,15 +388,16 @@ class Statement {
 
   /// drag over event
   void _dragOver(var event) {
-    Statement insertion = program._findInsertionPoint(event.client.y);
-    if (insertion != null) {
-      DivElement el = querySelector("#tx-insertion-${insertion.id}");
+    _insertion = program._findInsertionPoint(event.client.y);
+    if (_insertion != null) {
+      DivElement el = querySelector("#tx-insertion-${_insertion.id}");
       if (el != null && !el.classes.contains("show")) {
         querySelectorAll(".tx-insertion-line").classes.remove("show");
         el.classes.add("show");
       }
     }
   }
+  static Statement _insertion = null;
 
 
 
